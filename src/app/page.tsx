@@ -1,9 +1,16 @@
 import { getDashboardData } from "@/lib/pros/data";
 import { ProsDashboard } from "@/components/pros-dashboard";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/api/auth/signin");
+  }
+
   const data = await getDashboardData();
 
   return (
