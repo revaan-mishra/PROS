@@ -9,7 +9,7 @@
 * **Gamified Life Tracking**: Log your daily activities (Deep Work, Learning, Creative, Social) and earn XP. Your actions directly level up your personal RPG character.
 * **Domain World Map**: A visual, interactive map representing your life domains (Knowledge, Body, Mind, Execution, Expression, Relationships). Over-indexing on one stat makes its corresponding "Island" glow and grow, while neglecting others causes them to wither, helping you avoid "stat-overfitting" and maintain true life balance.
 * **True Offline-First Architecture (PWA)**: Built with `@serwist/next` and IndexedDB. Whether you're deep in the gym or on an airplane, you can log activities and finish workouts. Your actions are safely queued locally and automatically synchronized to the cloud the moment you reconnect to the internet.
-* **Integrated Fitness Module**: A dedicated "Train" tab that functions like a premium gym tracker (similar to the Strong app). Log your exercises, sets, reps, and weight. The integrated Rules Engine automatically calculates your total lifting volume and converts it directly into `Body XP`.
+* **Integrated Fitness Module**: A dedicated "Train" tab that functions like a premium gym tracker. Log your exercises, sets, reps, and weight. The integrated Rules Engine automatically calculates your total lifting volume and converts it directly into `Body XP`.
 * **Complex Rules Engine**: A backend engine that applies momentum multipliers, streak bonuses, and dynamic XP scaling based on the intensity and duration of your logged activities.
 
 ---
