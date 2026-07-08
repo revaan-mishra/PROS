@@ -2,6 +2,7 @@ import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { DrizzleAdapter } from "@auth/drizzle-adapter"
 import { db } from "@/db"
+import { users } from "@/db/schema"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db),
@@ -27,7 +28,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           
           if (user) return user
           
-          const newUser = await db.insert(require("./db/schema").users).values({
+          const newUser = await db.insert(users).values({
             email: "operator@example.com",
             name: "Operator Prime",
           }).returning()
