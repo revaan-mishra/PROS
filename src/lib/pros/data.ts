@@ -55,7 +55,7 @@ export async function getDashboardData() {
     projectRows,
     bookRows,
     settingsRow,
-    exercisesData,
+    initialExercisesData,
   ] = await Promise.all([
     db
       .select()
@@ -107,6 +107,14 @@ export async function getDashboardData() {
     db.select().from(appSettings).where(eq(appSettings.playerId, player.id)).limit(1),
     db.select().from(exercises).orderBy(exercises.name),
   ]);
+
+  let exercisesData = initialExercisesData;
+  if (exercisesData.length === 0) {
+    const { defaultExercises } = await import("./exercises");
+    await db.insert(exercises).values(defaultExercises);
+    // Re-fetch exercises after seeding
+    exercisesData = await db.select().from(exercises).orderBy(exercises.name);
+  }
 
   const now = new Date();
   const settings = settingsRow[0] ?? null;

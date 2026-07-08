@@ -29,6 +29,7 @@ export function ActiveWorkout({ exercises }: ActiveWorkoutProps) {
   const [notes, setNotes] = useState("");
   const [sets, setSets] = useState<WorkoutSet[]>([]);
   const [showAddExercise, setShowAddExercise] = useState(false);
+  const [exerciseFilter, setExerciseFilter] = useState("All");
   
   // Selected exercises for this session to group sets
   const [sessionExercises, setSessionExercises] = useState<Exercise[]>([]);
@@ -149,7 +150,7 @@ export function ActiveWorkout({ exercises }: ActiveWorkoutProps) {
             <div className="p-2 space-y-1">
               <div className="grid grid-cols-[30px_1fr_1fr] gap-2 px-2 py-1 text-[0.65rem] font-bold text-slate-500 uppercase tracking-widest text-center">
                 <div>Set</div>
-                <div>Lbs</div>
+                <div>Kgs</div>
                 <div>Reps</div>
               </div>
               
@@ -195,8 +196,19 @@ export function ActiveWorkout({ exercises }: ActiveWorkoutProps) {
             <h3 className="text-sm font-bold text-white">Select Exercise</h3>
             <button onClick={() => setShowAddExercise(false)} className="text-xs text-slate-500 hover:text-slate-300">Cancel</button>
           </div>
+          <div className="flex gap-2 overflow-x-auto pb-3 mb-2 scrollbar-none">
+            {["All", "Chest", "Back", "Legs", "Shoulders", "Arms", "Core"].map((g) => (
+              <button
+                key={g}
+                onClick={() => setExerciseFilter(g)}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition ${exerciseFilter === g ? "bg-cyan-400 text-black" : "bg-white/5 text-slate-400 hover:text-white"}`}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
           <div className="max-h-[300px] overflow-y-auto space-y-1 pr-2">
-            {exercises.map((ex) => (
+            {exercises.filter(ex => exerciseFilter === "All" || ex.muscleGroup === exerciseFilter).map((ex) => (
               <button 
                 key={ex.id}
                 onClick={() => handleAddExercise(ex)}

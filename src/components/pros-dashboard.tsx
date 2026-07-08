@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
+import { SubmitButton } from "./submit-button";
 import { WorldMap } from "./world-map";
 import { StreakCalendar } from "./streak-calendar";
 import { ActiveWorkout, type Exercise } from "./active-workout";
@@ -129,6 +130,21 @@ type Tab = "home" | "log" | "fitness" | "codex" | "quests" | "profile" | "chroni
 type CodexTab = "skills" | "attributes" | "books" | "projects";
 
 export function ProsDashboard({ data }: DashboardProps) {
+
+  const withToast = (actionFn: (fd: FormData) => Promise<any>, loading: string, success: string) => {
+    return async (formData: FormData) => {
+      try {
+        await toast.promise(actionFn(formData), {
+          loading,
+          success,
+          error: (e: any) => e.message || "Action failed"
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    };
+  };
+
   const [tab, setTab] = useState<Tab>("home");
   const [codexTab, setCodexTab] = useState<CodexTab>("skills");
   const [questFilter, setQuestFilter] = useState<"active" | "completed">("active");
@@ -283,22 +299,6 @@ export function ProsDashboard({ data }: DashboardProps) {
         </div>
       </div>
 
-      {/* World Map */}
-      <WorldMap attributes={data.attributes} />
-
-      {/* Streak Calendar */}
-      <StreakCalendar events={data.events} />
-
-      {/* Dormant Warning */}
-      {data.dormant && (
-        <div className="rounded-2xl border border-amber-300/30 bg-amber-500/10 p-4">
-          <p className="text-sm font-medium text-amber-100">Character Dormant</p>
-          <p className="mt-1 text-xs text-amber-100/70">
-            7+ days inactive. XP is halved. Log an action with a 50+ word note to reawaken.
-          </p>
-        </div>
-      )}
-
       {/* Quick Timer */}
       <div className="rounded-3xl border border-cyan-300/20 bg-[#07111F] p-5">
         <div className="flex items-center justify-between">
@@ -414,6 +414,22 @@ export function ProsDashboard({ data }: DashboardProps) {
           {data.events.length === 0 && <p className="text-sm text-slate-500 text-center py-6">No activity yet. Log your first action above.</p>}
         </div>
       </div>
+
+      {/* World Map */}
+      <WorldMap attributes={data.attributes} />
+
+      {/* Streak Calendar */}
+      <StreakCalendar events={data.events} />
+
+      {/* Dormant Warning */}
+      {data.dormant && (
+        <div className="rounded-2xl border border-amber-300/30 bg-amber-500/10 p-4">
+          <p className="text-sm font-medium text-amber-100">Character Dormant</p>
+          <p className="mt-1 text-xs text-amber-100/70">
+            7+ days inactive. XP is halved. Log an action with a 50+ word note to reawaken.
+          </p>
+        </div>
+      )}
     </div>
   );
 
@@ -584,22 +600,22 @@ export function ProsDashboard({ data }: DashboardProps) {
 
       {codexTab === "skills" && (
         <div className="space-y-3">
-          <form action={createSkillAction} className="flex gap-2">
+          <form action={withToast(createSkillAction, "Creating skill...", "Skill created!")} className="flex gap-2">
             <input name="name" required placeholder="New skill name" className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-slate-600 outline-none" />
             <select name="domain" className="rounded-xl border border-white/10 bg-black/40 px-2 py-2 text-sm text-white outline-none">
               {["Execution", "Knowledge", "Body", "Expression", "Mind", "Relationships"].map((d) => (
                 <option key={d} value={d}>{d}</option>
               ))}
             </select>
-            <button type="submit" className="rounded-xl bg-fuchsia-300/20 px-4 py-2 text-sm font-bold text-fuchsia-200">+</button>
+            <SubmitButton className="rounded-xl bg-fuchsia-300/20 px-4 py-2 text-sm font-bold text-fuchsia-200">+</SubmitButton>
           </form>
 
           {data.skills.length === 0 && <p className="text-sm text-slate-500 text-center py-8">No skills yet. Add your first above.</p>}
           {data.skills.map((s) => (
             <div key={s.id} className="group relative rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-              <div className="absolute right-3 top-3 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+              <div className="absolute right-3 top-3 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition">
                 <button type="button" onClick={() => setEditingSkillId(editingSkillId === s.id ? null : s.id)} className="text-[0.65rem] text-cyan-300">edit</button>
-                <form action={removeSkillAction}>
+                <form action={withToast(removeSkillAction, "Removing skill...", "Skill removed!")}>
                   <input type="hidden" name="id" value={s.id} />
                   <button className="text-[0.65rem] text-slate-500 hover:text-red-300">remove</button>
                 </form>
@@ -616,14 +632,14 @@ export function ProsDashboard({ data }: DashboardProps) {
               </div>
               <p className="mt-1 text-[0.7rem] text-slate-400">{s.masteryTier} · {s.xp} XP</p>
               {editingSkillId === s.id && (
-                <form action={updateSkillAction} className="mt-3 space-y-2 rounded-xl border border-white/10 bg-black/30 p-2">
+                <form action={withToast(updateSkillAction, "Updating skill...", "Skill updated!")} className="mt-3 space-y-2 rounded-xl border border-white/10 bg-black/30 p-2">
                   <input type="hidden" name="id" value={s.id} />
                   <input name="name" defaultValue={s.name} className="w-full rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white outline-none" />
                   <div className="flex gap-2">
                     <select name="domain" defaultValue={s.domain} className="flex-1 rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white outline-none">
                       {["Execution", "Knowledge", "Body", "Expression", "Mind", "Relationships"].map((d) => <option key={d} value={d}>{d}</option>)}
                     </select>
-                    <button type="submit" className="rounded-lg bg-fuchsia-300/20 px-3 py-1.5 text-xs font-bold text-fuchsia-200">save</button>
+                    <SubmitButton className="rounded-lg bg-fuchsia-300/20 px-3 py-1.5 text-xs font-bold text-fuchsia-200">save</SubmitButton>
                   </div>
                 </form>
               )}
@@ -649,12 +665,12 @@ export function ProsDashboard({ data }: DashboardProps) {
 
       {codexTab === "books" && (
         <div className="space-y-3">
-          <form action={createBookAction} className="space-y-2">
+          <form action={withToast(createBookAction, "Adding book...", "Book added!")} className="space-y-2">
             <input name="title" required placeholder="Book title" className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-slate-600 outline-none" />
             <div className="flex gap-2">
               <input name="author" placeholder="Author" className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-slate-600 outline-none" />
               <input name="totalPages" type="number" defaultValue={250} className="w-20 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none" />
-              <button type="submit" className="rounded-xl bg-amber-300/20 px-4 py-2 text-sm font-bold text-amber-200">+</button>
+              <SubmitButton className="rounded-xl bg-amber-300/20 px-4 py-2 text-sm font-bold text-amber-200">+</SubmitButton>
             </div>
           </form>
 
@@ -663,9 +679,9 @@ export function ProsDashboard({ data }: DashboardProps) {
             const pct = Math.min(100, Math.round((b.pagesRead / b.totalPages) * 100));
             return (
               <div key={b.id} className="group relative rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <div className="absolute right-3 top-3 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                <div className="absolute right-3 top-3 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition">
                   <button type="button" onClick={() => setEditingBookId(editingBookId === b.id ? null : b.id)} className="text-[0.65rem] text-cyan-300">edit</button>
-                  <form action={removeBookAction}>
+                  <form action={withToast(removeBookAction, "Removing book...", "Book removed!")}>
                     <input type="hidden" name="id" value={b.id} />
                     <button className="text-[0.65rem] text-slate-500 hover:text-red-300">remove</button>
                   </form>
@@ -677,20 +693,20 @@ export function ProsDashboard({ data }: DashboardProps) {
                 </div>
                 <div className="mt-2 flex items-center justify-between">
                   <p className="text-[0.7rem] text-slate-400">{b.pagesRead}/{b.totalPages} ({pct}%)</p>
-                  <form action={updateBookProgressAction}>
+                  <form action={withToast(updateBookProgressAction, "Updating progress...", "Progress updated!")}>
                     <input type="hidden" name="id" value={b.id} />
                     <input type="hidden" name="pagesRead" value="15" />
                     <button className="rounded-lg bg-amber-300/15 border border-amber-300/30 px-2.5 py-1 text-[0.7rem] font-bold text-amber-200">+15p</button>
                   </form>
                 </div>
                 {editingBookId === b.id && (
-                  <form action={updateBookAction} className="mt-3 space-y-2 rounded-xl border border-white/10 bg-black/30 p-2">
+                  <form action={withToast(updateBookAction, "Updating book...", "Book updated!")} className="mt-3 space-y-2 rounded-xl border border-white/10 bg-black/30 p-2">
                     <input type="hidden" name="id" value={b.id} />
                     <input name="title" defaultValue={b.title} className="w-full rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white outline-none" />
                     <div className="flex gap-2">
                       <input name="author" defaultValue={b.author} className="flex-1 rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white outline-none" />
                       <input name="totalPages" type="number" defaultValue={b.totalPages} className="w-20 rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white outline-none" />
-                      <button type="submit" className="rounded-lg bg-amber-300/20 px-3 py-1.5 text-xs font-bold text-amber-200">save</button>
+                      <SubmitButton className="rounded-lg bg-amber-300/20 px-3 py-1.5 text-xs font-bold text-amber-200">save</SubmitButton>
                     </div>
                   </form>
                 )}
@@ -702,20 +718,20 @@ export function ProsDashboard({ data }: DashboardProps) {
 
       {codexTab === "projects" && (
         <div className="space-y-3">
-          <form action={createProjectAction} className="space-y-2">
+          <form action={withToast(createProjectAction, "Creating project...", "Project created!")} className="space-y-2">
             <input name="title" required placeholder="Project name" className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-slate-600 outline-none" />
             <div className="flex gap-2">
               <input name="description" placeholder="Description" className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-slate-600 outline-none" />
-              <button type="submit" className="rounded-xl bg-purple-300/20 px-4 py-2 text-sm font-bold text-purple-200">+</button>
+              <SubmitButton className="rounded-xl bg-purple-300/20 px-4 py-2 text-sm font-bold text-purple-200">+</SubmitButton>
             </div>
           </form>
 
           {data.projects.length === 0 && <p className="text-sm text-slate-500 text-center py-8">No projects. Add one above.</p>}
           {data.projects.map((p) => (
             <div key={p.id} className="group relative rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-              <div className="absolute right-3 top-3 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+              <div className="absolute right-3 top-3 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition">
                 <button type="button" onClick={() => setEditingProjectId(editingProjectId === p.id ? null : p.id)} className="text-[0.65rem] text-cyan-300">edit</button>
-                <form action={removeProjectAction}>
+                <form action={withToast(removeProjectAction, "Removing project...", "Project removed!")}>
                   <input type="hidden" name="id" value={p.id} />
                   <button className="text-[0.65rem] text-slate-500 hover:text-red-300">remove</button>
                 </form>
@@ -724,7 +740,7 @@ export function ProsDashboard({ data }: DashboardProps) {
               {p.description && <p className="text-xs text-slate-400">{p.description}</p>}
               <p className="mt-1 text-[0.7rem] text-slate-500">{p.domain}</p>
               {editingProjectId === p.id && (
-                <form action={updateProjectAction} className="mt-3 space-y-2 rounded-xl border border-white/10 bg-black/30 p-2">
+                <form action={withToast(updateProjectAction, "Updating project...", "Project updated!")} className="mt-3 space-y-2 rounded-xl border border-white/10 bg-black/30 p-2">
                   <input type="hidden" name="id" value={p.id} />
                   <input name="title" defaultValue={p.title} className="w-full rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white outline-none" />
                   <div className="flex gap-2">
@@ -732,7 +748,7 @@ export function ProsDashboard({ data }: DashboardProps) {
                     <select name="domain" defaultValue={p.domain} className="rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white outline-none">
                       {["Execution", "Knowledge", "Body", "Expression", "Mind", "Relationships"].map((d) => <option key={d} value={d}>{d}</option>)}
                     </select>
-                    <button type="submit" className="rounded-lg bg-purple-300/20 px-3 py-1.5 text-xs font-bold text-purple-200">save</button>
+                    <SubmitButton className="rounded-lg bg-purple-300/20 px-3 py-1.5 text-xs font-bold text-purple-200">save</SubmitButton>
                   </div>
                 </form>
               )}
@@ -769,7 +785,7 @@ export function ProsDashboard({ data }: DashboardProps) {
       </div>
 
       {/* Create Quest */}
-      <form action={createQuestAction} className="space-y-2">
+      <form action={withToast(createQuestAction, "Creating quest...", "Quest created!")} className="space-y-2">
         <input name="title" required placeholder="New quest title" className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-slate-600 outline-none" />
         <div className="flex gap-2">
           <select name="domain" className="rounded-xl border border-white/10 bg-black/40 px-2 py-2 text-sm text-white outline-none">
@@ -779,7 +795,7 @@ export function ProsDashboard({ data }: DashboardProps) {
           </select>
           <input name="target" type="number" defaultValue={10} className="w-20 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none" />
           <input name="rewardXp" type="number" defaultValue={300} className="w-24 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none" />
-          <button type="submit" className="rounded-xl bg-emerald-300/20 px-4 py-2 text-sm font-bold text-emerald-200">+</button>
+          <SubmitButton className="rounded-xl bg-emerald-300/20 px-4 py-2 text-sm font-bold text-emerald-200">+</SubmitButton>
         </div>
       </form>
 
@@ -790,9 +806,9 @@ export function ProsDashboard({ data }: DashboardProps) {
           return (
             <div key={q.id} className="group relative rounded-2xl border border-white/10 bg-white/[0.03] p-4">
               {!q.isSystem && (
-                <div className="absolute right-3 top-3 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                <div className="absolute right-3 top-3 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition">
                   <button type="button" onClick={() => setEditingQuestId(editingQuestId === q.id ? null : q.id)} className="text-[0.65rem] text-cyan-300">edit</button>
-                  <form action={removeQuestAction}>
+                  <form action={withToast(removeQuestAction, "Removing quest...", "Quest removed!")}>
                     <input type="hidden" name="id" value={q.id} />
                     <button className="text-[0.65rem] text-slate-500 hover:text-red-300">remove</button>
                   </form>
@@ -811,7 +827,7 @@ export function ProsDashboard({ data }: DashboardProps) {
                 {q.progress}/{q.target} ({pct}%) · {q.domain} · +{q.rewardXp} XP
               </p>
               {editingQuestId === q.id && (
-                <form action={updateQuestAction} className="mt-3 space-y-2 rounded-xl border border-white/10 bg-black/30 p-2">
+                <form action={withToast(updateQuestAction, "Updating quest...", "Quest updated!")} className="mt-3 space-y-2 rounded-xl border border-white/10 bg-black/30 p-2">
                   <input type="hidden" name="id" value={q.id} />
                   <input name="title" defaultValue={q.title} required className="w-full rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white outline-none" />
                   <div className="flex gap-2">
@@ -820,7 +836,7 @@ export function ProsDashboard({ data }: DashboardProps) {
                     </select>
                     <input name="target" type="number" defaultValue={q.target} className="w-16 rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white outline-none" />
                     <input name="rewardXp" type="number" defaultValue={q.rewardXp} className="w-20 rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white outline-none" />
-                    <button type="submit" className="rounded-lg bg-emerald-300/20 px-3 py-1.5 text-xs font-bold text-emerald-200">save</button>
+                    <SubmitButton className="rounded-lg bg-emerald-300/20 px-3 py-1.5 text-xs font-bold text-emerald-200">save</SubmitButton>
                   </div>
                 </form>
               )}
@@ -857,9 +873,9 @@ export function ProsDashboard({ data }: DashboardProps) {
         <div className="space-y-3">
           {filtered.map((e) => (
             <div key={e.id} className="group relative rounded-2xl border border-white/5 bg-white/[0.02] p-4">
-              <div className="absolute right-3 top-3 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+              <div className="absolute right-3 top-3 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition">
                 <button type="button" onClick={() => setEditingEventId(editingEventId === e.id ? null : e.id)} className="text-[0.65rem] text-cyan-300">edit</button>
-                <form action={deleteActivityAction}>
+                <form action={withToast(deleteActivityAction, "Deleting activity...", "Activity deleted!")}>
                   <input type="hidden" name="id" value={e.id} />
                   <button className="text-[0.65rem] text-slate-500 hover:text-red-300">remove</button>
                 </form>
@@ -874,10 +890,10 @@ export function ProsDashboard({ data }: DashboardProps) {
                 +{e.xpAwarded}
               </span>
               {editingEventId === e.id && (
-                <form action={updateActivityAction} className="mt-4 space-y-2 rounded-xl border border-white/10 bg-black/30 p-3">
+                <form action={withToast(updateActivityAction, "Updating activity...", "Activity updated!")} className="mt-4 space-y-2 rounded-xl border border-white/10 bg-black/30 p-3">
                   <input type="hidden" name="id" value={e.id} />
                   <input name="title" defaultValue={e.title} className="w-full rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white outline-none" />
-                  <button type="submit" className="rounded-lg bg-cyan-300/20 px-3 py-1.5 text-xs font-bold text-cyan-200">Save</button>
+                  <SubmitButton className="rounded-lg bg-cyan-300/20 px-3 py-1.5 text-xs font-bold text-cyan-200">Save</SubmitButton>
                 </form>
               )}
             </div>
@@ -927,7 +943,7 @@ export function ProsDashboard({ data }: DashboardProps) {
       {/* Templates Manager */}
       <div>
         <h3 className="text-sm font-semibold text-white mb-2">Templates</h3>
-        <form action={createTemplateAction} className="flex gap-2 mb-3">
+        <form action={withToast(createTemplateAction, "Creating template...", "Template created!")} className="flex gap-2 mb-3">
           <input name="name" required placeholder="Template name" className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-slate-600 outline-none" />
           <select name="type" className="rounded-xl border border-white/10 bg-black/40 px-2 py-2 text-sm text-white outline-none">
             {data.activityDefinitions.map((d) => (
@@ -935,7 +951,7 @@ export function ProsDashboard({ data }: DashboardProps) {
             ))}
           </select>
           <input name="defaultMinutes" type="number" defaultValue={30} className="w-16 rounded-xl border border-white/10 bg-black/40 px-2 py-2 text-sm text-white outline-none" />
-          <button type="submit" className="rounded-xl bg-cyan-300/20 px-3 py-2 text-sm font-bold text-cyan-200">+</button>
+          <SubmitButton className="rounded-xl bg-cyan-300/20 px-3 py-2 text-sm font-bold text-cyan-200">+</SubmitButton>
         </form>
         <div className="space-y-2">
           {data.templates.map((t) => (
@@ -947,14 +963,14 @@ export function ProsDashboard({ data }: DashboardProps) {
                 </div>
                 <div className="flex gap-2">
                   <button type="button" onClick={() => setEditingTemplateId(editingTemplateId === t.id ? null : t.id)} className="text-[0.65rem] text-cyan-300">edit</button>
-                  <form action={removeTemplateAction}>
+                  <form action={withToast(removeTemplateAction, "Removing template...", "Template removed!")}>
                     <input type="hidden" name="id" value={t.id} />
                     <button className="text-[0.65rem] text-slate-500 hover:text-red-300">remove</button>
                   </form>
                 </div>
               </div>
               {editingTemplateId === t.id && (
-                <form action={updateTemplateAction} className="mt-3 space-y-2 rounded-xl border border-white/10 bg-black/30 p-2">
+                <form action={withToast(updateTemplateAction, "Updating template...", "Template updated!")} className="mt-3 space-y-2 rounded-xl border border-white/10 bg-black/30 p-2">
                   <input type="hidden" name="id" value={t.id} />
                   <input name="name" defaultValue={t.name} className="w-full rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white outline-none" />
                   <div className="flex gap-2">
@@ -962,7 +978,7 @@ export function ProsDashboard({ data }: DashboardProps) {
                       {data.activityDefinitions.map((d) => <option key={d.type} value={d.type}>{d.label}</option>)}
                     </select>
                     <input name="defaultMinutes" type="number" defaultValue={t.defaultMinutes} className="w-16 rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white outline-none" />
-                    <button type="submit" className="rounded-lg bg-cyan-300/20 px-3 py-1.5 text-xs font-bold text-cyan-200">save</button>
+                    <SubmitButton className="rounded-lg bg-cyan-300/20 px-3 py-1.5 text-xs font-bold text-cyan-200">save</SubmitButton>
                   </div>
                 </form>
               )}
@@ -1000,7 +1016,7 @@ export function ProsDashboard({ data }: DashboardProps) {
       <div className="space-y-6">
         <div>
           <h3 className="text-sm font-semibold text-white mb-2">Profile</h3>
-          <form action={updateProfileAction} className="space-y-3 rounded-xl border border-white/10 bg-white/[0.02] p-3">
+          <form action={withToast(updateProfileAction, "Saving profile...", "Profile saved!")} className="space-y-3 rounded-xl border border-white/10 bg-white/[0.02] p-3">
             <div>
               <label className="text-[0.7rem] font-medium text-slate-400">Handle</label>
               <input type="text" name="handle" defaultValue={data.player.handle} className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none" required />
@@ -1009,13 +1025,13 @@ export function ProsDashboard({ data }: DashboardProps) {
               <label className="text-[0.7rem] font-medium text-slate-400">Archetype</label>
               <input type="text" name="archetype" defaultValue={data.player.archetype} className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none" required />
             </div>
-            <button type="submit" className="w-full rounded-xl bg-cyan-300/20 px-3 py-2 text-sm font-bold text-cyan-200">Save profile</button>
+            <SubmitButton className="w-full rounded-xl bg-cyan-300/20 px-3 py-2 text-sm font-bold text-cyan-200">Save profile</SubmitButton>
           </form>
         </div>
 
         <div>
           <h3 className="text-sm font-semibold text-white mb-2">System Settings</h3>
-        <form action={updateSettingsAction} className="space-y-3 rounded-xl border border-white/10 bg-white/[0.02] p-3">
+        <form action={withToast(updateSettingsAction, "Saving settings...", "Settings saved!")} className="space-y-3 rounded-xl border border-white/10 bg-white/[0.02] p-3">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-white">Hardcore mode</p>
@@ -1041,7 +1057,7 @@ export function ProsDashboard({ data }: DashboardProps) {
             <option value="dark">Dark</option>
             <option value="light">Light</option>
           </select>
-          <button type="submit" className="w-full rounded-xl bg-cyan-300/20 px-3 py-2 text-sm font-bold text-cyan-200">Save settings</button>
+          <SubmitButton className="w-full rounded-xl bg-cyan-300/20 px-3 py-2 text-sm font-bold text-cyan-200">Save settings</SubmitButton>
         </form>
         </div>
       </div>
@@ -1086,9 +1102,9 @@ export function ProsDashboard({ data }: DashboardProps) {
             placeholder="Paste backup JSON here..."
             className="w-full rounded-xl border border-white/10 bg-black/40 p-3 text-xs text-slate-200 font-mono placeholder:text-slate-600 outline-none"
           />
-          <button type="submit" className="mt-2 w-full rounded-xl border border-emerald-300/30 bg-emerald-400/10 py-2 text-sm font-bold text-emerald-200">
+          <SubmitButton className="mt-2 w-full rounded-xl border border-emerald-300/30 bg-emerald-400/10 py-2 text-sm font-bold text-emerald-200">
             Restore from JSON
-          </button>
+          </SubmitButton>
         </form>
       </div>
     </div>

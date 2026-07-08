@@ -79,6 +79,16 @@ export function WorldMap({ attributes }: { attributes: AttributeScore[] }) {
         <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Domain World Map</p>
         <p className="text-[0.65rem] text-slate-500">The health of your regions reflects your life balance.</p>
       </div>
+
+      {/* Legend below Map */}
+      <div className="absolute bottom-4 left-0 right-0 flex flex-wrap justify-center gap-x-4 gap-y-2 px-4 pointer-events-none">
+        {REGIONS.map((r) => (
+          <div key={r.id} className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: r.color }} />
+            <span className="text-[0.6rem] text-slate-300 uppercase tracking-widest">{r.label}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
