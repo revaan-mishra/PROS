@@ -7,11 +7,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db),
   providers: [
     Credentials({
+      name: "Master Key",
       credentials: {
+        username: { label: "Username", type: "text", placeholder: "admin" },
         password: { label: "Password", type: "password" },
       },
       authorize: async (credentials) => {
-        if (credentials?.password === process.env.AUTH_SECRET) {
+        // Simple single-user auth: Check if username is admin and password matches the secret
+        const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
+        if (credentials?.username === "admin" && credentials?.password === secret) {
           // Find or create default user
           const user = await db.query.users.findFirst({
             where: (users, { eq }) => eq(users.email, "operator@example.com"),
