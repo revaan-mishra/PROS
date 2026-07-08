@@ -1,0 +1,16 @@
+{
+  "name": "Personal RPG Operating System",
+  "short_name": "PROS",
+  "description": "Gamified life management",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070A12",
+  "theme_color": "#070A12",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
